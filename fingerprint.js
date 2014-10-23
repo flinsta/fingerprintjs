@@ -28,6 +28,8 @@
     nativeForEach = Array.prototype.forEach;
     nativeMap = Array.prototype.map;
 
+    this.data = {};
+
     this.each = function (obj, iterator, context) {
       if (obj === null) {
         return;
@@ -71,39 +73,46 @@
 
   Fingerprint.prototype = {
     get: function(){
-      var keys = [];
-      keys.push(navigator.userAgent);
-      keys.push(navigator.language);
-      keys.push(screen.colorDepth);
+
+      this.data.navigator = {};
+      this.data.navigator.userAgent = navigator.userAgent;
+      this.data.navigator.language = navigator.language;
+      this.data.navigator.cpuClass = navigator.cpuClass;
+      this.data.navigator.platform = navigator.platform;
+      this.data.navigator.doNotTrack = navigator.doNotTrack;
+
+      this.data.pluginString = this.getPluginsString();
+      this.data.isCanvasSupported = this.isCanvasSupported();
+
+      if( this.canvas && this.isCanvasSupported()) {
+          this.data.canvasFingerprint = this.getCanvasFingerprint();
+      }
+
+      this.data.screen = {};
+      this.data.screen.colorDepth = screen.colorDepth;
       if (this.screen_resolution) {
-        var resolution = this.getScreenResolution();
-        if (typeof resolution !== 'undefined'){ // headless browsers, such as phantomjs
-          keys.push(this.getScreenResolution().join('x'));
-        }
+          var resolution = this.getScreenResolution();
+          if (typeof resolution !== 'undefined'){ // headless browsers, such as phantomjs
+              this.data.screen.resolution = this.getScreenResolution().join('x');
+          }
       }
-      keys.push(new Date().getTimezoneOffset());
-      keys.push(this.hasSessionStorage());
-      keys.push(this.hasLocalStorage());
-      keys.push(!!window.indexedDB);
-      //body might not be defined at this point or removed programmatically
-      if(document.body){
-        keys.push(typeof(document.body.addBehavior));
-      } else {
-        keys.push(typeof undefined);
-      }
-      keys.push(typeof(window.openDatabase));
-      keys.push(navigator.cpuClass);
-      keys.push(navigator.platform);
-      keys.push(navigator.doNotTrack);
-      keys.push(this.getPluginsString());
-      if(this.canvas && this.isCanvasSupported()){
-        keys.push(this.getCanvasFingerprint());
-      }
+
+      this.data.timeZone = new Date().getTimezoneOffset();
+      this.data.hasSessionStorage = this.hasSessionStorage();
+      this.data.hasLocalStorage = this.hasLocalStorage();
+      this.data.hasIndexedDB = !!window.indexdDB;
+
+      this.data.openDatabase = typeof( window.openDatabase);
+
       if(this.hasher){
-        return this.hasher(keys.join('###'), 31);
+        return this.hasher( JSON.stringify( this.data), 31);
       } else {
-        return this.murmurhash3_32_gc(keys.join('###'), 31);
+        return this.murmurhash3_32_gc( JSON.stringify( this.data), 31);
       }
+    },
+    getData: function() {
+        this.get();
+        return this.data;
     },
 
     /**
