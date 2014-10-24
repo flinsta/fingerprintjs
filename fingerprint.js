@@ -61,6 +61,18 @@
       return results;
     };
 
+    this.joinData = function( seperator) {
+        var returnString = "";
+
+        for( var key in this.data) {
+            var value = this.data[key];
+            returnString += key + ":" + value + seperator;
+        }
+
+        return returnString.substring(0, returnString.length - seperator.length);
+    }
+
+
     if (typeof options == 'object'){
       this.hasher = options.hasher;
       this.screen_resolution = options.screen_resolution;
@@ -74,12 +86,12 @@
   Fingerprint.prototype = {
     get: function(){
 
-      this.data.navigator = {};
-      this.data.navigator.userAgent = navigator.userAgent;
-      this.data.navigator.language = navigator.language;
-      this.data.navigator.cpuClass = navigator.cpuClass;
-      this.data.navigator.platform = navigator.platform;
-      this.data.navigator.doNotTrack = navigator.doNotTrack;
+      //this.data.navigator = {};
+      this.data.userAgent = navigator.userAgent;
+      this.data.language = navigator.language;
+      this.data.cpuClass = navigator.cpuClass;
+      this.data.platform = navigator.platform;
+      this.data.doNotTrack = navigator.doNotTrack;
 
       this.data.pluginString = this.getPluginsString();
       this.data.isCanvasSupported = this.isCanvasSupported();
@@ -88,12 +100,11 @@
           this.data.canvasFingerprint = this.getCanvasFingerprint();
       }
 
-      this.data.screen = {};
-      this.data.screen.colorDepth = screen.colorDepth;
+      this.data.colorDepth = screen.colorDepth;
       if (this.screen_resolution) {
           var resolution = this.getScreenResolution();
           if (typeof resolution !== 'undefined'){ // headless browsers, such as phantomjs
-              this.data.screen.resolution = this.getScreenResolution().join('x');
+              this.data.resolution = this.getScreenResolution().join('x');
           }
       }
 
@@ -105,9 +116,9 @@
       this.data.openDatabase = typeof( window.openDatabase);
 
       if(this.hasher){
-        return this.hasher( JSON.stringify( this.data), 31);
+        return this.hasher( this.joinData( "###"), 31);
       } else {
-        return this.murmurhash3_32_gc( JSON.stringify( this.data), 31);
+        return this.murmurhash3_32_gc( this.joinData( "###"), 31);
       }
     },
     getData: function() {
